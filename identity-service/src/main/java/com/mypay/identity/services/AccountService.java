@@ -18,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -279,13 +280,14 @@ public class AccountService {
                 .build();
         _loginLogRepository.save(log);
     }
-    public String logout(LogoutRequest request) {
+    public String logout(String token) {
         try {
-            SignedJWT signedJWT = SignedJWT.parse(request.getAccessToken());
+            SignedJWT signedJWT = SignedJWT.parse(token);
             JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
 
             String jwtId = claims.getJWTID();
             Date expiryTime = claims.getExpirationTime();
+            String username = claims.getSubject();
 
             if (expiryTime.after(new Date())) {
                 InvalidatedToken invalidatedToken = InvalidatedToken.builder()
@@ -294,10 +296,12 @@ public class AccountService {
                         .build();
                 _invalidatedTokenRepository.save(invalidatedToken);
             }
-
-            if (request.getRefreshToken() != null) {
-                _refreshTokenRepository.findByToken(request.getRefreshToken())
-                        .ifPresent(_refreshTokenRepository::delete);
+            User user = _userRepository.findByUsername(username).orElse(null);
+            if (user != null) {
+                _refreshTokenRepository.findAll().stream()
+                        .filter(rt -> rt.getUser() != null &&
+                                rt.getUser().getId().equals(user.getId()))
+                        .forEach(_refreshTokenRepository::delete);
             }
 
             return "Đăng xuất thành công!";
@@ -317,6 +321,18 @@ public class AccountService {
         }
 
         return userResponses;
+
+    }
+    public UserResponse getUserByToken(String token) throws ParseException {
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+        String username =  claims.getSubject();
+        User user = _userRepository.findByUsername(username).orElse(null);
+        UserResponse response = new UserResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setFullName(user.getFullName());
+        return response;
 
     }
 }

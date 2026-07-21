@@ -5,11 +5,14 @@ import com.mypay.identity.dtos.Response.ApiResponse;
 import com.mypay.identity.dtos.Response.TokenResponse;
 import com.mypay.identity.dtos.Response.UserResponse;
 import com.mypay.identity.services.AccountService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -73,9 +76,10 @@ public class UserAuthController {
                 .build());
     }
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<String>> logout(@RequestBody @Valid LogoutRequest request) {
+    public ResponseEntity<ApiResponse<String>> logout(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
         return ResponseEntity.ok(ApiResponse.<String>builder()
-                .data(_accountService.logout(request))
+                .data(_accountService.logout(token))
                 .build());
     }
     @GetMapping
@@ -85,6 +89,19 @@ public class UserAuthController {
                 .code(200)
                 .message("Fetch all users successfully")
                 .data(users)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+    @SecurityRequirement(name = "bearerAuth") // Liên kết trực tiếp với scheme "bearerAuth" đã định nghĩa ở OpenApiConfig
+    @GetMapping("/token")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserByToken(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) throws ParseException {
+        String token = authHeader.substring(7);
+        UserResponse user = _accountService.getUserByToken(token);
+        ApiResponse<UserResponse> response= ApiResponse.<UserResponse>builder()
+                .code(200)
+                .message("Fetch all users successfully")
+                .data(user)
                 .build();
         return ResponseEntity.ok(response);
     }

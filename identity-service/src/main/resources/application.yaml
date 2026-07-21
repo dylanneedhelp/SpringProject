@@ -39,6 +39,7 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operations-sorter: alpha
+  use-fqn: true
 #http://localhost:8081/swagger-ui/index.html
 
 jwt:

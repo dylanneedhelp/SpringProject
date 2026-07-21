@@ -1,5 +1,6 @@
 package com.mypay.identity.configuration;
 
+import com.mypay.identity.repositories.InvalidatedTokenRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -27,6 +28,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Value("${jwt.signKey}")
     private String SIGNER_KEY;
 
+    private final InvalidatedTokenRepository _invalidatedTokenRepository;
+
+    public JwtAuthenticationFilter(InvalidatedTokenRepository invalidatedTokenRepository) {
+        _invalidatedTokenRepository = invalidatedTokenRepository;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -44,6 +51,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
                 if (signedJWT.verify(verifier)) {
+                    String jwtId = signedJWT.getJWTClaimsSet().getJWTID();
+                    if (_invalidatedTokenRepository.existsById(jwtId)) {
+                        System.out.println("=== [JWT Filter] Token này đã bị thu hồi (Đã đăng xuất trước đó)!");
+                        // Dừng chuỗi filter, không cho phép đi tiếp vào Controller
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
                     String username = signedJWT.getJWTClaimsSet().getSubject();
                     System.out.println("=== [JWT Filter] Token HỢP LỆ của user: " + username);
 
