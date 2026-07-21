@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mypay_postgres
+    environment:
+      POSTGRES_USER: mypay_user
+      POSTGRES_PASSWORD: mypay_password
+    ports:
+      - "5432:5432"
+    restart: always
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: mypay_redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: mypay_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always

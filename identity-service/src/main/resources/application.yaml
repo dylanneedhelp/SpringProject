@@ -1,0 +1,47 @@
+server:
+  port: 8081
+
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/identity_db
+    username: postgres
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: dangvanbo2004@gmail.com
+    password: ocmb wpqt zxkj xbvh
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+#http://localhost:8081/swagger-ui/index.html
+
+jwt:
+  signKey: "XyoNeBIfTwb3rCdDFFnzcXQHcyaX7G+y/nTn5loDeYWuf4hPFMsfwEfjsM5qGz+i"
+  valid-duration: 3600
+  refreshable-duration: 120
