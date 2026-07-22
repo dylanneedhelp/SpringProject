@@ -1,0 +1,32 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: customer-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/customer_db
+    username: postgres
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+  use-fqn: true
+#http://localhost:8082/swagger-ui/index.html
+
+# Copy chung key giải mã JWT từ Identity Service để đồng bộ bảo mật phân tán
+jwt:
+  signKey: "XyoNeBIfTwb3rCdDFFnzcXQHcyaX7G+y/nTn5loDeYWuf4hPFMsfwEfjsM5qGz+i"
