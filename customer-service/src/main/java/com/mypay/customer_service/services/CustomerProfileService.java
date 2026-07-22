@@ -2,6 +2,7 @@ package com.mypay.customer_service.services;
 
 
 import com.mypay.customer_service.dtos.request.CustomerProfileRequest;
+import com.mypay.customer_service.dtos.response.CustomerResponse;
 import com.mypay.customer_service.dtos.response.ProfileResponse;
 import com.mypay.customer_service.entities.Customer;
 import com.mypay.customer_service.entities.KycProfile;
@@ -59,12 +60,35 @@ public class CustomerProfileService {
 
         return "Khởi tạo hồ sơ và mở ví thành công!";
     }
-
-    public ProfileResponse getCustomerByAccountId(String accId){
+    public CustomerResponse getCustomerByAccountId(String accId){
         Customer customer = customerRepository.findByAccountId(accId).orElse(null);
-        Wallet wallet = walletRepository.findByCustomerId(customer.getId()).orElse(null);
-        KycProfile kycProfile = kycProfileRepository.findByCustomerId(customer.getId()).orElse(null);
-        LinkedBankAccount linkedBankAccount = linkedBankAccountRepository.findByWalletId(wallet.getId()).orElse(null);
+        if (customer == null) {
+            return null;
+        }
+        CustomerResponse response = new CustomerResponse();
+
+        response.setCustomerId(customer.getId());
+        response.setAccountId(customer.getAccountId());
+        response.setAddress(customer.getAddress());
+        response.setDob(customer.getDob());
+        response.setAvatarUrl(customer.getAvatarUrl());
+        response.setCreatedAt(customer.getCreatedAt());
+        response.setUpdatedAt(customer.getUpdatedAt());
+        response.setPhoneNumber(customer.getPhoneNumber());
+        response.setFullName(customer.getFullName());
+        response.setGender(customer.getGender());
+
+
+        return response;
+    }
+
+    public ProfileResponse getProfileByAccountId(String accId){
+        Customer customer = customerRepository.findByAccountId(accId)
+                .orElseThrow(() -> new RuntimeException("Customer profile not found"));
+        Wallet wallet = walletRepository.findByCustomerId(customer.getId())
+                .orElseThrow(() -> new RuntimeException("wallet not found"));
+
+
         ProfileResponse response = new ProfileResponse();
 
         response.setCustomerId(customer.getId());
@@ -85,21 +109,26 @@ public class CustomerProfileService {
         response.setWalletTier(wallet.getTier());
         response.setWalletFrozenBalance(wallet.getFrozenBalance());
 
-        response.setKycPrfId(kycProfile.getId());
-        response.setStatusKycPrf(kycProfile.getStatus());
-        response.setIdCardNumberKycPrf(kycProfile.getIdCardNumber());
-        response.setFrontImageUrlKycPrf(kycProfile.getFrontImageUrl());
-        response.setBackImageUrlKycPrf(kycProfile.getBackImageUrl());
-        response.setRejectionReasonKycPrf(kycProfile.getRejectionReason());
-        response.setVerifiedAtKycPrf(kycProfile.getVerifiedAt());
-        response.setFaceVideoUrlKycPrf(kycProfile.getFaceVideoUrl());
 
-        response.setLinkBankAccountId(linkedBankAccount.getId());
-        response.setLinkBankAccountAccountNumber(linkedBankAccount.getAccountNumber());
-        response.setLinkBankAccountBankCode(linkedBankAccount.getBankCode());
-        response.setLinkBankAccountLinkedAt(linkedBankAccount.getLinkedAt());
-        response.setLinkBankAccountIsPrimary(linkedBankAccount.isPrimary());
-        response.setLinkBankAccountAccountName(linkedBankAccount.getAccountName());
+       kycProfileRepository.findByCustomerId(customer.getId()).ifPresent(kycProfile -> {
+            response.setKycPrfId(kycProfile.getId());
+            response.setStatusKycPrf(kycProfile.getStatus());
+            response.setIdCardNumberKycPrf(kycProfile.getIdCardNumber());
+            response.setFrontImageUrlKycPrf(kycProfile.getFrontImageUrl());
+            response.setBackImageUrlKycPrf(kycProfile.getBackImageUrl());
+            response.setRejectionReasonKycPrf(kycProfile.getRejectionReason());
+            response.setVerifiedAtKycPrf(kycProfile.getVerifiedAt());
+            response.setFaceVideoUrlKycPrf(kycProfile.getFaceVideoUrl());
+        });
+
+        linkedBankAccountRepository.findByWalletId(wallet.getId()).ifPresent(linkedBankAccount -> {
+            response.setLinkBankAccountId(linkedBankAccount.getId());
+            response.setLinkBankAccountAccountNumber(linkedBankAccount.getAccountNumber());
+            response.setLinkBankAccountBankCode(linkedBankAccount.getBankCode());
+            response.setLinkBankAccountLinkedAt(linkedBankAccount.getLinkedAt());
+            response.setLinkBankAccountIsPrimary(linkedBankAccount.isPrimary());
+            response.setLinkBankAccountAccountName(linkedBankAccount.getAccountName());
+        });
 
         return response;
     }
