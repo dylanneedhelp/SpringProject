@@ -1,5 +1,7 @@
 package com.mypay.identity.services;
 
+import com.mypay.identity.Exception.AppException;
+import com.mypay.identity.Exception.ErrorCode;
 import com.mypay.identity.dtos.Request.*;
 import com.mypay.identity.dtos.Response.TokenResponse;
 import com.mypay.identity.dtos.Response.UserResponse;
@@ -56,10 +58,10 @@ public class AccountService {
     }
     public String register (UserRegisterRequest request){
         if(_userRepository.existsByUsername(request.getUsername())){
-            throw new RuntimeException("Username is existed");
+            throw new AppException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
         var userRole = _roleRepository.findById("USER")
-                .orElseThrow(() -> new RuntimeException("Default Role USER not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.DEFAULT_ROLE_NOT_FOUND));
 
         Set<Role> roles = new HashSet<>();
         roles.add(userRole);
@@ -98,16 +100,16 @@ public class AccountService {
         String savedOtp = _redisTemplate.opsForValue().get(redisKey);
 
         if (savedOtp == null) {
-            throw new RuntimeException("Mã OTP đã hết hạn 3 phút hoặc không tồn tại!");
+            throw new AppException(ErrorCode.OTP_EXPIRED_OR_NOT_FOUND);
         }
 
         if (!savedOtp.equals(request.getOtpCode())) {
-            throw new RuntimeException("Mã OTP nhập vào không chính xác!");
+            throw new AppException(ErrorCode.OTP_INVALID);
         }
 
 
         User user = _userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Not found this user email"));
+                .orElseThrow(() -> new AppException(ErrorCode.EMAIL_NOT_FOUND));
 
         user.setStatus(AccountStatus.ACTIVE);
         user.setActive(true);
@@ -119,9 +121,9 @@ public class AccountService {
     }
 
     public String resendOtp(ResendOtpRequest request){
-        var user =  _userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new RuntimeException("Email is not existed"));
+        var user =  _userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new AppException(ErrorCode.EMAIL_NOT_FOUND));
         if(user.getStatus() == AccountStatus.ACTIVE && user.isActive() == true){
-            throw new RuntimeException("this account have been already actived");
+            throw new AppException(ErrorCode.ACCOUNT_ACTIVED);
         }
         String otpCode = String.format("%06d", new Random().nextInt(999999));
         String redisKey = "OTP:" + request.getEmail();
@@ -133,7 +135,7 @@ public class AccountService {
             message.setText("Mã OTP mới của bạn là: " + otpCode + ". Mã có hiệu lực trong 3 phút.");
             _mailSender.send(message);
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi hệ thống gửi mail.");
+            throw new AppException(ErrorCode.ERROR_SEND_EMAIL);
         }
         return "Đã gửi lại mã OTP. Vui lòng kiểm tra email!";
     }
@@ -143,12 +145,12 @@ public class AccountService {
 
         if (user == null) {
             saveLoginLog(request.getUsername(), ipAddress, deviceInfo, false, "Tài khoản không tồn tại");
-            throw new RuntimeException("Tài khoản hoặc mật khẩu không chính xác");
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         if (user.isLocked() && user.getLockoutEnd() != null && user.getLockoutEnd().isAfter(LocalDateTime.now())) {
             saveLoginLog(user.getUsername(), ipAddress, deviceInfo, false, "Tài khoản đang bị khóa tạm thời");
-            throw new RuntimeException("Tài khoản đã bị khóa do nhập sai nhiều lần. Vui lòng thử lại sau 15 phút.");
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -159,17 +161,17 @@ public class AccountService {
             }
             _userRepository.save(user);
             saveLoginLog(user.getUsername(), ipAddress, deviceInfo, false, "Sai mật khẩu");
-            throw new RuntimeException("Tài khoản hoặc mật khẩu không chính xác");
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
 
         if (user.getStatus() == AccountStatus.PENDING) {
             saveLoginLog(user.getUsername(), ipAddress, deviceInfo, false, "Chưa xác thực OTP");
-            throw new RuntimeException("Tài khoản chưa được xác thực. Vui lòng kiểm tra email để nhập mã OTP.");
+            throw new AppException(ErrorCode.ACCOUNT_NOT_VERIFIED);
         }
         if (user.getStatus() == AccountStatus.BANNED) {
             saveLoginLog(user.getUsername(), ipAddress, deviceInfo, false, "Tài khoản bị cấm");
-            throw new RuntimeException("Tài khoản của bạn đã bị vô hiệu hóa bởi Admin.");
+            throw new AppException(ErrorCode.ACCOUNT_BANNED);
         }
 
 
@@ -199,10 +201,10 @@ public class AccountService {
     }
     public TokenResponse refreshToken(RefreshTokenRequest request) {
         RefreshToken refreshToken = _refreshTokenRepository.findByToken(request.getToken())
-                .orElseThrow(() -> new RuntimeException("Refresh token không hợp lệ"));
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REFRESH_TOKEN));
 
         if (refreshToken.isRevoked() || refreshToken.getExpiryDate().isBefore(Instant.now())) {
-            throw new RuntimeException("Refresh token đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.");
+            throw new AppException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
 
 
@@ -228,10 +230,10 @@ public class AccountService {
 
     public String changePassword(ChangePasswordRequest request) {
         User user = _userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-            throw new RuntimeException("Mật khẩu cũ không chính xác");
+            throw new AppException(ErrorCode.OLD_PASSWORD_INCORRECT);
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -265,7 +267,7 @@ public class AccountService {
             jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
             return jwsObject.serialize();
         } catch (JOSEException e) {
-            throw new RuntimeException("Không thể tạo Token JWT");
+            throw new AppException(ErrorCode.JWT_GENERATION_FAILED);
         }
     }
 
@@ -307,7 +309,7 @@ public class AccountService {
 
             return "Đăng xuất thành công!";
         } catch (java.text.ParseException e) {
-            throw new RuntimeException("Access Token không hợp lệ!");
+            throw new AppException(ErrorCode.INVALID_ACCESS_TOKEN);
         }
     }
     public List<UserResponse> getAll(){
@@ -329,6 +331,9 @@ public class AccountService {
         JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
         String username =  claims.getSubject();
         User user = _userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
         UserResponse response = new UserResponse();
         response.setId(user.getId());
         response.setUsername(user.getUsername());

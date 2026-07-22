@@ -1,5 +1,7 @@
 package com.mypay.customer_service.services;
 
+import com.mypay.customer_service.Exception.AppException;
+import com.mypay.customer_service.Exception.ErrorCode;
 import com.mypay.customer_service.dtos.request.BankLinkRequest;
 import com.mypay.customer_service.entities.Customer;
 import com.mypay.customer_service.entities.Wallet;
@@ -17,10 +19,10 @@ public class WalletService {
 
     public Wallet getWalletInfo(String accountId) {
         Customer customer = customerRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new RuntimeException("Chưa có hồ sơ khách hàng. Vui lòng cập nhật Profile!"));
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_PROFILE_NOT_FOUND));
 
         return walletRepository.findByCustomerId(customer.getId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Ví điện tử của bạn!"));
+                .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_FOUND));
     }
 
     public String linkBankAccount(String accountId, BankLinkRequest request) {

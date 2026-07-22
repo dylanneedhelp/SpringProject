@@ -1,6 +1,8 @@
 package com.mypay.customer_service.services;
 
 
+import com.mypay.customer_service.Exception.AppException;
+import com.mypay.customer_service.Exception.ErrorCode;
 import com.mypay.customer_service.dtos.request.CustomerProfileRequest;
 import com.mypay.customer_service.dtos.response.CustomerResponse;
 import com.mypay.customer_service.dtos.response.ProfileResponse;
@@ -30,10 +32,10 @@ public class CustomerProfileService {
     @Transactional
     public String onboardCustomer(String accountId, CustomerProfileRequest request) {
         if (customerRepository.findByAccountId(accountId).isPresent()) {
-            throw new RuntimeException("Tài khoản này đã có hồ sơ khách hàng!");
+            throw new AppException(ErrorCode.CUSTOMER_PROFILE_EXISTED);
         }
         if (customerRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new RuntimeException("Số điện thoại này đã được sử dụng!");
+            throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
         }
 
         Customer newCustomer = Customer.builder()
@@ -84,9 +86,9 @@ public class CustomerProfileService {
 
     public ProfileResponse getProfileByAccountId(String accId){
         Customer customer = customerRepository.findByAccountId(accId)
-                .orElseThrow(() -> new RuntimeException("Customer profile not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         Wallet wallet = walletRepository.findByCustomerId(customer.getId())
-                .orElseThrow(() -> new RuntimeException("wallet not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_FOUND));
 
 
         ProfileResponse response = new ProfileResponse();
