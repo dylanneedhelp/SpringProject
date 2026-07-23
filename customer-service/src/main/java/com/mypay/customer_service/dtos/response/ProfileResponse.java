@@ -9,6 +9,8 @@ import lombok.experimental.FieldDefaults;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -43,10 +45,5 @@ public class ProfileResponse {
     String walletStatus;
 
 
-    String linkBankAccountId;
-    String linkBankAccountBankCode;
-    String linkBankAccountAccountNumber;
-    String linkBankAccountAccountName;
-    boolean linkBankAccountIsPrimary = false;
-    LocalDateTime linkBankAccountLinkedAt = LocalDateTime.now();
+    List<LinkedBankAccountResponse> linkedBankAccounts;
 }

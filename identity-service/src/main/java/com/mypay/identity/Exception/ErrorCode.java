@@ -38,7 +38,11 @@ public enum ErrorCode {
     OLD_PASSWORD_INCORRECT(1032, "Mật khẩu cũ không chính xác", HttpStatus.BAD_REQUEST),
     JWT_GENERATION_FAILED(1033, "Không thể tạo Token JWT", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_ACCESS_TOKEN(1034, "Access Token không hợp lệ!", HttpStatus.UNAUTHORIZED),
-
+    KYC_ALREADY_EXISTS(1035, "Hồ sơ eKYC đã tồn tại hoặc đã được gửi trước đó", HttpStatus.BAD_REQUEST),
+    KYC_NOT_FOUND(1036, "Không tìm thấy hồ sơ eKYC", HttpStatus.NOT_FOUND),
+    BANK_ACCOUNT_ALREADY_EXISTS(1037, "Tài khoản ngân hàng này đã được liên kết trước đó", HttpStatus.BAD_REQUEST),
+    BANK_ACCOUNT_NOT_FOUND(1038, "Không tìm thấy thông tin tài khoản ngân hàng liên kết", HttpStatus.NOT_FOUND),
+    WALLET_ALREADY_BLOCKED(1039, "Ví điện tử đã ở trạng thái bị khóa", HttpStatus.BAD_REQUEST),
     // Security & JWT chung
     UNAUTHENTICATED(1014, "Bạn chưa đăng nhập hoặc Token không hợp lệ", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1015, "Bạn không có quyền truy cập chức năng này", HttpStatus.FORBIDDEN),

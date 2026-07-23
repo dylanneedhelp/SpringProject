@@ -1,4 +1,4 @@
-package com.mypay.customer_service.configuration;
+package com.mypay.loan_service.configuration;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;

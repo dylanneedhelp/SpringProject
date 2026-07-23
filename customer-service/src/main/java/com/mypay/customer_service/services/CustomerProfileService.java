@@ -4,7 +4,9 @@ package com.mypay.customer_service.services;
 import com.mypay.customer_service.Exception.AppException;
 import com.mypay.customer_service.Exception.ErrorCode;
 import com.mypay.customer_service.dtos.request.CustomerProfileRequest;
+import com.mypay.customer_service.dtos.request.CustomerUpdateRequest;
 import com.mypay.customer_service.dtos.response.CustomerResponse;
+import com.mypay.customer_service.dtos.response.LinkedBankAccountResponse;
 import com.mypay.customer_service.dtos.response.ProfileResponse;
 import com.mypay.customer_service.entities.Customer;
 import com.mypay.customer_service.entities.KycProfile;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -122,16 +125,45 @@ public class CustomerProfileService {
             response.setVerifiedAtKycPrf(kycProfile.getVerifiedAt());
             response.setFaceVideoUrlKycPrf(kycProfile.getFaceVideoUrl());
         });
+        List<LinkedBankAccount> linkedBanks = linkedBankAccountRepository.findAllByWalletId(wallet.getId());
+        if (linkedBanks != null && !linkedBanks.isEmpty()) {
+            List<LinkedBankAccountResponse> bankResponses = linkedBanks.stream().map(bank ->
+                    LinkedBankAccountResponse.builder()
+                            .linkBankAccountId(bank.getId())
+                            .linkBankAccountBankCode(bank.getBankCode())
+                            .linkBankAccountAccountNumber(bank.getAccountNumber())
+                            .linkBankAccountAccountName(bank.getAccountName())
+                            .linkBankAccountIsPrimary(bank.isPrimary())
+                            .linkBankAccountLinkedAt(bank.getLinkedAt())
+                            .build()
+            ).toList();
 
-        linkedBankAccountRepository.findByWalletId(wallet.getId()).ifPresent(linkedBankAccount -> {
-            response.setLinkBankAccountId(linkedBankAccount.getId());
-            response.setLinkBankAccountAccountNumber(linkedBankAccount.getAccountNumber());
-            response.setLinkBankAccountBankCode(linkedBankAccount.getBankCode());
-            response.setLinkBankAccountLinkedAt(linkedBankAccount.getLinkedAt());
-            response.setLinkBankAccountIsPrimary(linkedBankAccount.isPrimary());
-            response.setLinkBankAccountAccountName(linkedBankAccount.getAccountName());
-        });
+            response.setLinkedBankAccounts(bankResponses);
+        }
 
         return response;
     }
+    @Transactional
+    public String updateProfile(String accountId, CustomerUpdateRequest request) {
+        Customer customer = customerRepository.findByAccountId(accountId)
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_PROFILE_NOT_FOUND));
+
+        if (request.getFullName() != null) customer.setFullName(request.getFullName());
+        if (request.getPhoneNumber() != null) {
+            if (!customer.getPhoneNumber().equals(request.getPhoneNumber()) && customerRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+                throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
+            }
+            customer.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getDob() != null) customer.setDob(request.getDob());
+        if (request.getGender() != null) customer.setGender(request.getGender());
+        if (request.getAddress() != null) customer.setAddress(request.getAddress());
+        if (request.getAvatarUrl() != null) customer.setAvatarUrl(request.getAvatarUrl());
+
+        customer.setUpdatedAt(LocalDateTime.now());
+        customerRepository.save(customer);
+
+        return "Cập nhật hồ sơ thành công!";
+    }
+
 }

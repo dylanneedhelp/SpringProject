@@ -1,4 +1,4 @@
-package com.mypay.customer_service.Exception;
+package com.mypay.loan_service.Exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -44,6 +44,12 @@ public enum ErrorCode {
     BANK_ACCOUNT_NOT_FOUND(1038, "Không tìm thấy thông tin tài khoản ngân hàng liên kết", HttpStatus.NOT_FOUND),
     WALLET_ALREADY_BLOCKED(1039, "Ví điện tử đã ở trạng thái bị khóa", HttpStatus.BAD_REQUEST),
     WALLET_NOT_FOUND_BY_CUSTOMER(1040, "Không tìm thấy ví tương ứng với mã khách hàng này", HttpStatus.NOT_FOUND),
+    // --- LOAN SERVICE
+    LOAN_APPLICATION_NOT_FOUND(2001, "Không tìm thấy hồ sơ yêu cầu vay", HttpStatus.NOT_FOUND),
+    INVALID_APPLICATION_STATUS(2002, "Trạng thái hồ sơ không hợp lệ để thực hiện thao tác này", HttpStatus.BAD_REQUEST),
+    LOAN_NOT_FOUND(2003, "Không tìm thấy khoản vay", HttpStatus.NOT_FOUND),
+    LOAN_ALREADY_DISBURSED(2004, "Khoản vay này đã được giải ngân rồi", HttpStatus.BAD_REQUEST),
+    VALUATION_REPORT_NOT_FOUND(2005, "Không tìm thấy báo cáo Thẩm định & Định giá", HttpStatus.NOT_FOUND),
     // Security & JWT chung
     UNAUTHENTICATED(1014, "Bạn chưa đăng nhập hoặc Token không hợp lệ", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1015, "Bạn không có quyền truy cập chức năng này", HttpStatus.FORBIDDEN),

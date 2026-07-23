@@ -58,7 +58,11 @@ public class GatewayConfig {
                         .uri(identityUri)
                 )
                 .route("customer-service", r -> r
-                        .path("/api/v1/customers/**")
+                        .path(
+                                "/api/v1/customers/**",
+                                "/api/v1/wallets/**",
+                                "/api/v1/admin/**"
+                                )
                         .filters(f -> f.requestRateLimiter(config -> {
                             config.setRateLimiter(defaultRateLimiter());
                             config.setKeyResolver(userIpKeyResolver);

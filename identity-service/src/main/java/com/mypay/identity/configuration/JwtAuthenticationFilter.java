@@ -59,6 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         return;
                     }
                     String username = signedJWT.getJWTClaimsSet().getSubject();
+                    String accountId = signedJWT.getJWTClaimsSet().getStringClaim("accountId");
                     System.out.println("=== [JWT Filter] Token HỢP LỆ của user: " + username);
 
                     String rolesStr = (String) signedJWT.getJWTClaimsSet().getClaim("roles");
@@ -67,7 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .collect(Collectors.toList());
 
                     UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(username, null, authorities);
+                            new UsernamePasswordAuthenticationToken(accountId, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 } else {
                     System.out.println("=== [JWT Filter] Cảnh báo: Chữ ký Token KHÔNG ĐÚNG!");

@@ -2,6 +2,7 @@ package com.mypay.customer_service.controllers;
 
 
 import com.mypay.customer_service.dtos.request.CustomerProfileRequest;
+import com.mypay.customer_service.dtos.request.CustomerUpdateRequest;
 import com.mypay.customer_service.dtos.response.ApiResponse;
 import com.mypay.customer_service.dtos.response.CustomerResponse;
 import com.mypay.customer_service.dtos.response.ProfileResponse;
@@ -54,6 +55,15 @@ public class CustomerController {
                 .code(1000)
                 .message("Fetch customer profile successfully")
                 .data(customer)
+                .build());
+    }
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<String>> updateProfile(Principal principal,
+                                                             @RequestBody CustomerUpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.<String>builder()
+                .code(1000)
+                .message("Success")
+                .data(customerProfileService.updateProfile(principal.getName(), request))
                 .build());
     }
 }
