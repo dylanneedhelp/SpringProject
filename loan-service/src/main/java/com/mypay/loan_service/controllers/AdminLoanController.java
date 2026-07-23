@@ -29,7 +29,7 @@ public class AdminLoanController {
         return ResponseEntity.ok(ApiResponse.<String>builder()
                 .code(1000)
                 .message("Success")
-                .data(adminLoanService.appraiseLoan(principal.getName(), id, request))
+                .data(adminLoanService.appraiseLoan(id,principal.getName(), request))
                 .build());
     }
 

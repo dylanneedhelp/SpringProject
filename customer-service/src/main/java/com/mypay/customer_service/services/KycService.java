@@ -3,6 +3,7 @@ package com.mypay.customer_service.services;
 import com.mypay.customer_service.Exception.AppException;
 import com.mypay.customer_service.Exception.ErrorCode;
 import com.mypay.customer_service.dtos.request.KycRequest;
+import com.mypay.customer_service.dtos.response.KycProfileResponse;
 import com.mypay.customer_service.entities.Customer;
 import com.mypay.customer_service.entities.KycProfile;
 import com.mypay.customer_service.repositories.CustomerRepository;
@@ -43,12 +44,22 @@ public class KycService {
         return "Nộp hồ sơ eKYC thành công, vui lòng chờ hệ thống phê duyệt!";
     }
 
-    public KycProfile getMyKycStatus(String accountId) {
+    public KycProfileResponse getMyKycStatus(String accountId) {
         Customer customer = customerRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_PROFILE_NOT_FOUND));
 
-        return kycProfileRepository.findByCustomerId(customer.getId())
+        KycProfile kycProfile = kycProfileRepository.findByCustomerId(customer.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.KYC_NOT_FOUND));
+        KycProfileResponse response = new KycProfileResponse();
+        response.setId(kycProfile.getId());
+        response.setStatus(kycProfile.getStatus());
+        response.setIdCardNumber(kycProfile.getIdCardNumber());
+        response.setFrontImageUrl(kycProfile.getFrontImageUrl());
+        response.setBackImageUrl(kycProfile.getBackImageUrl());
+        response.setRejectionReason(kycProfile.getRejectionReason());
+        response.setVerifiedAt(kycProfile.getVerifiedAt());
+        response.setFaceVideoUrl(kycProfile.getFaceVideoUrl());
+        return response;
     }
 
     @Transactional

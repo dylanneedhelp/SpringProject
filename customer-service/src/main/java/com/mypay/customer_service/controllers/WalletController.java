@@ -2,6 +2,8 @@ package com.mypay.customer_service.controllers;
 
 import com.mypay.customer_service.dtos.request.BankLinkRequest;
 import com.mypay.customer_service.dtos.response.ApiResponse;
+import com.mypay.customer_service.dtos.response.LinkedBankAccountResponse;
+import com.mypay.customer_service.dtos.response.WalletResponse;
 import com.mypay.customer_service.entities.LinkedBankAccount;
 import com.mypay.customer_service.entities.Wallet;
 import com.mypay.customer_service.services.WalletService;
@@ -21,11 +23,11 @@ public class WalletController {
     private final WalletService walletService;
 
     @GetMapping("/my-wallet")
-    public ResponseEntity<ApiResponse<Wallet>> getMyWallet(Principal principal) {
-        return ResponseEntity.ok(ApiResponse.<Wallet>builder()
+    public ResponseEntity<ApiResponse<WalletResponse>> getMyWallet(Principal principal) {
+        return ResponseEntity.ok(ApiResponse.<WalletResponse>builder()
                 .code(1000)
                 .message("Success")
-                .data(walletService.getWalletInfo(principal.getName()))
+                .data(walletService.getWalletInfo2(principal.getName()))
                 .build());
     }
 
@@ -41,8 +43,8 @@ public class WalletController {
 
     // 3. Lấy danh sách ngân hàng liên kết
     @GetMapping("/banks")
-    public ResponseEntity<ApiResponse<List<LinkedBankAccount>>> getLinkedBanks(Principal principal) {
-        return ResponseEntity.ok(ApiResponse.<List<LinkedBankAccount>>builder()
+    public ResponseEntity<ApiResponse<List<LinkedBankAccountResponse>>> getLinkedBanks(Principal principal) {
+        return ResponseEntity.ok(ApiResponse.<List<LinkedBankAccountResponse>>builder()
                 .code(1000)
                 .message("Success")
                 .data(walletService.getLinkedBanks(principal.getName()))
@@ -76,6 +78,14 @@ public class WalletController {
                 .code(1000)
                 .message("Success")
                 .data(walletService.deleteLinkedBank(principal.getName(), id))
+                .build());
+    }
+    @PostMapping("/checkKyc")
+    public ResponseEntity<ApiResponse<Boolean>> checkKyc(Principal principal) {
+        return ResponseEntity.ok(ApiResponse.<Boolean>builder()
+                .code(1000)
+                .message("Success")
+                .data(walletService.checkKyc(principal.getName()))
                 .build());
     }
 }

@@ -44,6 +44,8 @@ public enum ErrorCode {
     BANK_ACCOUNT_NOT_FOUND(1038, "Không tìm thấy thông tin tài khoản ngân hàng liên kết", HttpStatus.NOT_FOUND),
     WALLET_ALREADY_BLOCKED(1039, "Ví điện tử đã ở trạng thái bị khóa", HttpStatus.BAD_REQUEST),
     WALLET_NOT_FOUND_BY_CUSTOMER(1040, "Không tìm thấy ví tương ứng với mã khách hàng này", HttpStatus.NOT_FOUND),
+    KYC_REQUIRED(1041, "Vui lòng hoàn thành định danh điện tử (eKYC) trước khi liên kết ngân hàng", HttpStatus.FORBIDDEN),
+    LINKEDBANK_IS_PRIMARIED_ALREADY(1042, "Ngân hàng đã được set mặc định", HttpStatus.BAD_REQUEST),
     // Security & JWT chung
     UNAUTHENTICATED(1014, "Bạn chưa đăng nhập hoặc Token không hợp lệ", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1015, "Bạn không có quyền truy cập chức năng này", HttpStatus.FORBIDDEN),

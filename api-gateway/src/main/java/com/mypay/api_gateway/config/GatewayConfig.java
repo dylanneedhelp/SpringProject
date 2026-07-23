@@ -61,7 +61,7 @@ public class GatewayConfig {
                         .path(
                                 "/api/v1/customers/**",
                                 "/api/v1/wallets/**",
-                                "/api/v1/admin/**"
+                                "/api/v1/admin/kyc/**"
                                 )
                         .filters(f -> f.requestRateLimiter(config -> {
                             config.setRateLimiter(defaultRateLimiter());
@@ -70,7 +70,10 @@ public class GatewayConfig {
                         .uri(customerUri)
                 )
                 .route("loan-service", r -> r
-                        .path("/api/v1/loans/**")
+                        .path(
+                                "/api/v1/loans/**",
+                                "/api/v1/admin/loans/**"
+                        )
                         .filters(f -> f.requestRateLimiter(config -> {
                             config.setRateLimiter(defaultRateLimiter());
                             config.setKeyResolver(userIpKeyResolver);

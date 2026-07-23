@@ -3,10 +3,14 @@ package com.mypay.customer_service.services;
 import com.mypay.customer_service.Exception.AppException;
 import com.mypay.customer_service.Exception.ErrorCode;
 import com.mypay.customer_service.dtos.request.BankLinkRequest;
+import com.mypay.customer_service.dtos.response.LinkedBankAccountResponse;
+import com.mypay.customer_service.dtos.response.WalletResponse;
 import com.mypay.customer_service.entities.Customer;
+import com.mypay.customer_service.entities.KycProfile;
 import com.mypay.customer_service.entities.LinkedBankAccount;
 import com.mypay.customer_service.entities.Wallet;
 import com.mypay.customer_service.repositories.CustomerRepository;
+import com.mypay.customer_service.repositories.KycProfileRepository;
 import com.mypay.customer_service.repositories.LinkedBankAccountRepository;
 import com.mypay.customer_service.repositories.WalletRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,13 +29,30 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final CustomerRepository customerRepository;
     private final LinkedBankAccountRepository linkedBankAccountRepository;
+    private final KycProfileRepository kycProfileRepository;
 
+    public WalletResponse getWalletInfo2(String accountId) {
+        Customer customer = customerRepository.findByAccountId(accountId)
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_PROFILE_NOT_FOUND));
+
+        Wallet wallet= walletRepository.findByCustomerId(customer.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_FOUND));
+        WalletResponse response = new WalletResponse();
+        response.setId(wallet.getId());
+        response.setStatus(wallet.getStatus());
+        response.setCurrency(wallet.getCurrency());
+        response.setBalance(wallet.getBalance());
+        response.setTier(wallet.getTier());
+        response.setFrozenBalance(wallet.getFrozenBalance());
+        return response;
+    }
     public Wallet getWalletInfo(String accountId) {
         Customer customer = customerRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_PROFILE_NOT_FOUND));
 
         return walletRepository.findByCustomerId(customer.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_FOUND));
+
     }
     @Transactional
     public String updateWalletStatus(String accountId, String status) {
@@ -44,15 +66,41 @@ public class WalletService {
         walletRepository.save(wallet);
         return "Cập nhật trạng thái ví thành công: " + status;
     }
-    public List<LinkedBankAccount> getLinkedBanks(String accountId) {
+    public List<LinkedBankAccountResponse> getLinkedBanks(String accountId) {
         Wallet wallet = getWalletInfo(accountId);
-        return linkedBankAccountRepository.findAllByWalletId(wallet.getId());
-
+        List<LinkedBankAccount> linkedBankAccounts = linkedBankAccountRepository.findAllByWalletId(wallet.getId());
+        List<LinkedBankAccountResponse> responses = new ArrayList<LinkedBankAccountResponse>();
+        if (linkedBankAccounts != null) {
+            for (LinkedBankAccount bank : linkedBankAccounts) {
+                LinkedBankAccountResponse dto = LinkedBankAccountResponse.builder()
+                        .linkBankAccountId(bank.getId())
+                        .linkBankAccountBankCode(bank.getBankCode())
+                        .linkBankAccountAccountNumber(bank.getAccountNumber())
+                        .linkBankAccountAccountName(bank.getAccountName())
+                        .linkBankAccountIsPrimary(bank.isPrimary())
+                        .linkBankAccountLinkedAt(bank.getLinkedAt())
+                        .build();
+                responses.add(dto);
+            }
+        }
+        return responses;
+    }
+    public Boolean checkKyc(String accountId){
+        Wallet wallet = getWalletInfo(accountId);
+        KycProfile kyc = kycProfileRepository.findByCustomerId(wallet.getCustomer().getId()).orElse(null);
+        if (kyc == null || !kyc.getStatus().equals("APPROVED")) {
+            return false;
+        }
+        return true;
     }
     @Transactional
     public String linkBankAccount(String accountId, BankLinkRequest request) {
-        Wallet wallet = getWalletInfo(accountId);
 
+        Wallet wallet = getWalletInfo(accountId);
+        KycProfile kyc = kycProfileRepository.findByCustomerId(wallet.getCustomer().getId()).orElse(null);
+        if (kyc == null || !kyc.getStatus().equals("APPROVED")) {
+            throw new AppException(ErrorCode.KYC_REQUIRED);
+        }
         if (linkedBankAccountRepository.existsByWalletIdAndAccountNumber(wallet.getId(), request.getAccountNumber())) {
             throw new AppException(ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS);
         }
@@ -80,6 +128,9 @@ public class WalletService {
 
 
         linkedBankAccountRepository.findByWalletIdAndIsPrimaryTrue(wallet.getId()).ifPresent(oldPrimary -> {
+            if(targetBank==oldPrimary){
+                throw new AppException(ErrorCode.LINKEDBANK_IS_PRIMARIED_ALREADY);
+            }
             oldPrimary.setPrimary(false);
             linkedBankAccountRepository.save(oldPrimary);
         });

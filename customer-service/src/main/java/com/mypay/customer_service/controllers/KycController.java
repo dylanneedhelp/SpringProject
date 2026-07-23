@@ -2,6 +2,7 @@ package com.mypay.customer_service.controllers;
 
 import com.mypay.customer_service.dtos.request.KycRequest;
 import com.mypay.customer_service.dtos.response.ApiResponse;
+import com.mypay.customer_service.dtos.response.KycProfileResponse;
 import com.mypay.customer_service.entities.KycProfile;
 import com.mypay.customer_service.services.KycService;
 import jakarta.validation.Valid;
@@ -30,8 +31,8 @@ public class KycController {
     }
 
     @GetMapping("/customers/kyc")
-    public ResponseEntity<ApiResponse<KycProfile>> getMyKyc(Principal principal) {
-        return ResponseEntity.ok(ApiResponse.<KycProfile>builder()
+    public ResponseEntity<ApiResponse<KycProfileResponse>> getMyKyc(Principal principal) {
+        return ResponseEntity.ok(ApiResponse.<KycProfileResponse>builder()
                 .code(1000)
                 .message("Success")
                 .data(kycService.getMyKycStatus(principal.getName()))
